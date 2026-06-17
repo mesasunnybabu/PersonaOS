@@ -124,14 +124,15 @@ function ChatInterface({ profile, onMessageSent, onSendRef }) {
 
   const bottomRef = useRef(null);
 
-  useEffect(() => {
+useEffect(() => {
     loadHistory();
     loadMemoryStats();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
 
   useEffect(() => {
     if (onSendRef) onSendRef((msg) => sendMessage(msg));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
 
   useEffect(() => {
