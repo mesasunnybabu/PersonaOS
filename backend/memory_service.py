@@ -6,9 +6,9 @@ from sentence_transformers import SentenceTransformer
 from datetime import datetime
 import uuid
 
-print("⏳ Loading sentence-transformers model...")
-embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-print("✅ Embedding model loaded.")
+print("⏳ Loading sentence-transformers model...", flush=True)
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+print("✅ Embedding model loaded.", flush=True)
 
 chroma_client = chromadb.PersistentClient(
     path="./chroma_db",
