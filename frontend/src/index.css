@@ -1,0 +1,6 @@
+/* frontend/src/index.css */
+
+/* These three lines activate all of Tailwind's utility classes */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
