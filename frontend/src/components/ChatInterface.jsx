@@ -140,7 +140,7 @@ function ChatInterface({ profile, onMessageSent, onSendRef }) {
 
   async function loadHistory() {
     try {
-      const res  = await fetch(`http://localhost:8000/api/chat/history/${profile.id}`);
+      const res  = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/history/${profile.id}`);
       const data = await res.json();
 
       const historyMessages = [];
@@ -185,7 +185,7 @@ function ChatInterface({ profile, onMessageSent, onSendRef }) {
 
   async function loadMemoryStats() {
     try {
-      const res  = await fetch(`http://localhost:8000/api/memory/stats/${profile.id}`);
+      const res  = await fetch(`${process.env.REACT_APP_API_URL}/api/memory/stats/${profile.id}`);
       const data = await res.json();
       setMemoryCount(data.vectors_stored);
     } catch (err) {
@@ -208,7 +208,7 @@ function ChatInterface({ profile, onMessageSent, onSendRef }) {
     setIsLoading(true);
 
     try {
-      const res = await fetch('http://localhost:8000/api/chat', {
+      const res = await fetch('${process.env.REACT_APP_API_URL}/api/chat', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ user_id: profile.id, message: trimmed })

@@ -31,7 +31,7 @@ function Dashboard({ profile, onLogout }) {
 
   async function loadAnalytics() {
     try {
-      const res  = await fetch(`http://localhost:8000/api/analytics/${profile.id}`);
+      const res  = await fetch(`${process.env.REACT_APP_API_URL}/api/analytics/${profile.id}`);
       const data = await res.json();
       setAnalytics(data);
     } catch (err) {

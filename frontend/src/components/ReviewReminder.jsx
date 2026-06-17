@@ -15,7 +15,7 @@ function ReviewReminder({ userId, onReviewTopic }) {
 
   async function fetchReviews() {
     try {
-      const res  = await fetch(`http://localhost:8000/api/reviews/${userId}`);
+      const res  = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${userId}`);
       const data = await res.json();
       setReviews(data.due_reviews || []);
     } catch (err) {

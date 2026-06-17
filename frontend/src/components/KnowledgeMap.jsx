@@ -60,7 +60,7 @@ function TopicDetailPanel({ topic, userId, onClose }) {
   const colors = getTopicColor(topic.confidence_score);
 
   useEffect(() => {
-    fetch(`http://localhost:8000/api/knowledge/${userId}/topic/${topic.topic}`)
+    fetch(`${process.env.REACT_APP_API_URL}/api/knowledge/${userId}/topic/${topic.topic}`)
       .then(r => r.json())
       .then(d => setDetail(d))
       .catch(() => setDetail(null))
@@ -129,7 +129,7 @@ function KnowledgeMap({ userId, refreshTrigger }) {
 
   async function loadGraph() {
     try {
-      const res  = await fetch(`http://localhost:8000/api/knowledge/${userId}`);
+      const res  = await fetch(`${process.env.REACT_APP_API_URL}/api/knowledge/${userId}`);
       const data = await res.json();
       setGraphData(data);
     } catch (err) {
