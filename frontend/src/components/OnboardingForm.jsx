@@ -22,7 +22,6 @@ function OnboardingForm({ onComplete }) {
   // onComplete(profileData) to tell App.jsx to switch to the Dashboard
 
   // ── Form State ─────────────────────────────────────────────────────────────
-  // Each field in the form has its own piece of state
   const [formData, setFormData] = useState({
     name:               '',
     background:         '',
@@ -36,18 +35,15 @@ function OnboardingForm({ onComplete }) {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
-  // Generic change handler — works for all text inputs and selects
-  // [e.target.name] is computed property syntax: it uses the input's
-  // name attribute as the key to update in formData
   function handleChange(e) {
     setFormData(prev => ({
-      ...prev,                          // Keep all existing fields
-      [e.target.name]: e.target.value   // Update only the changed field
+      ...prev,
+      [e.target.name]: e.target.value
     }));
   }
 
   async function handleSubmit() {
-    // Basic client-side validation before hitting the API
+    // Basic client-side validation
     if (!formData.name.trim()) {
       setError('Please enter your name.');
       return;
@@ -65,26 +61,26 @@ function OnboardingForm({ onComplete }) {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/profile', {
+      // API call using corrected environment variable backticks
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/profile`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',  // Tell FastAPI we're sending JSON
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),         // Convert JS object → JSON string
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
         const errData = await response.json();
-        // FastAPI puts error details in errData.detail
         throw new Error(errData.detail || 'Failed to create profile');
       }
 
       const profile = await response.json();
 
-      // Save the profile ID to localStorage so we recognize this user on return
+      // Save user ID locally
       localStorage.setItem('persona_user_id', profile.id.toString());
 
-      // Tell App.jsx we're done — pass the full profile data up
+      // Hand off to main App component
       onComplete(profile);
 
     } catch (err) {
@@ -207,7 +203,7 @@ function OnboardingForm({ onComplete }) {
               value={formData.learning_goals}
               onChange={handleChange}
               rows={3}
-              placeholder="e.g. I want to build AI-powered apps, understand LLMs, and get an internship at a product company..."
+              placeholder="e.g. I want to build AI-powered apps, understand LLMs..."
               className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm
                          focus:outline-none focus:ring-2 focus:ring-indigo-400
                          resize-none transition-all"
