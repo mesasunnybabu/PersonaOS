@@ -6,9 +6,18 @@ from sentence_transformers import SentenceTransformer
 from datetime import datetime
 import uuid
 
-print("⏳ Loading sentence-transformers model...", flush=True)
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-print("✅ Embedding model loaded.", flush=True)
+embedding_model = None
+
+def get_embedding_model():
+    global embedding_model
+
+    if embedding_model is None:
+        print("Loading embedding model...", flush=True)
+        embedding_model = SentenceTransformer(
+            "all-MiniLM-L6-v2"
+        )
+
+    return embedding_model
 
 chroma_client = chromadb.PersistentClient(
     path="./chroma_db",
@@ -22,7 +31,7 @@ collection = chroma_client.get_or_create_collection(
 
 
 def embed_text(text: str) -> list:
-    return embedding_model.encode(text).tolist()
+    return get_embedding_model().encode(text).tolist()
 
 
 def store_memory(
