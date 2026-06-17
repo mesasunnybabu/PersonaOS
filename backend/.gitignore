@@ -1,0 +1,7 @@
+# backend/.gitignore
+.env
+chroma_db/
+venv/
+__pycache__/
+*.pyc
+personaos.db
