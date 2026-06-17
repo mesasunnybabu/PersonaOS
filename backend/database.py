@@ -3,7 +3,7 @@
 # PURPOSE: This file handles ONE thing — the connection to SQLite.
 # Every other file that needs the database imports from here.
 # This is the "single source of truth" for database configuration.
-
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -19,7 +19,8 @@ from sqlalchemy.orm import sessionmaker
 # When you run uvicorn from the backend/ folder, this file appears as:
 # personaos/backend/personaos.db
 
-DATABASE_URL = "sqlite:///./personaos.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'personaos.db')}"
 
 # ── Engine ────────────────────────────────────────────────────────────────────
 #

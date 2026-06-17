@@ -1,0 +1,8 @@
+{
+  "evaluated_at": "2026-06-17T12:51:38.775883",
+  "num_samples": 4,
+  "context_precision": 0.792,
+  "context_recall": 0.825,
+  "faithfulness": 0.725,
+  "answer_relevancy": 0.75
+}
