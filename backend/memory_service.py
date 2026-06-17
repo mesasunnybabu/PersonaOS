@@ -1,23 +1,13 @@
-# backend/memory_service.py
-
+import os
+import requests
 import chromadb
 from chromadb.config import Settings
-from sentence_transformers import SentenceTransformer
 from datetime import datetime
 import uuid
 
-embedding_model = None
-
-def get_embedding_model():
-    global embedding_model
-
-    if embedding_model is None:
-        print("Loading embedding model...", flush=True)
-        embedding_model = SentenceTransformer(
-            "all-MiniLM-L6-v2"
-        )
-
-    return embedding_model
+# Fetch the Hugging Face Token from your Render Environment Variables
+HF_TOKEN = os.getenv("HF_TOKEN")
+API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
 
 chroma_client = chromadb.PersistentClient(
     path="./chroma_db",
@@ -31,7 +21,21 @@ collection = chroma_client.get_or_create_collection(
 
 
 def embed_text(text: str) -> list:
-    return get_embedding_model().encode(text).tolist()
+    """Calls Hugging Face API instead of loading the model locally to save RAM"""
+    if not HF_TOKEN:
+        raise ValueError("HF_TOKEN environment variable is missing in Render settings!")
+        
+    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+    
+    try:
+        response = requests.post(API_URL, headers=headers, json={"inputs": text}, timeout=10)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Hugging Face API returned error status {response.status_code}: {response.text}")
+    except Exception as e:
+        print(f"❌ Embedding generation failed: {e}")
+        raise e
 
 
 def store_memory(
@@ -49,7 +53,7 @@ def store_memory(
         embeddings=[embedding],
         documents=[combined_text],
         metadatas=[{
-            "user_id":      str(user_id),       # Always store as string
+            "user_id":      str(user_id),
             "user_message": user_message,
             "ai_response":  ai_response[:1000],
             "topic":        topic,
@@ -66,73 +70,50 @@ def retrieve_memories(
     n_results: int = 3,
     topic:     str = None
 ) -> list:
-    """
-    Fixed retrieval:
-    - Uses ONLY single-field where clause (no $and — avoids ChromaDB version issues)
-    - Filters by user_id in the where clause
-    - Post-filters by topic in Python if needed
-    - Logs what's happening so bugs are visible
-    """
-
     total_in_collection = collection.count()
     print(f"🔍 Retrieving memories: user_id={user_id}, query='{query[:50]}...', total_in_db={total_in_collection}")
 
     if total_in_collection == 0:
-        print("⚠️  ChromaDB collection is empty.")
         return []
 
     query_embedding = embed_text(query)
-
-    # Fetch more than needed so we can post-filter by user and deduplicate
-    # Cap at total collection size to avoid ChromaDB errors
     fetch_count = min(n_results * 5, total_in_collection)
 
     try:
-        # Single-condition where clause — much more compatible across ChromaDB versions
         results = collection.query(
             query_embeddings=[query_embedding],
             n_results=fetch_count,
-            where={"user_id": str(user_id)},    # ✅ Simple single filter only
+            where={"user_id": str(user_id)},
             include=["metadatas", "distances"]
         )
     except Exception as e:
         print(f"❌ ChromaDB query failed: {e}")
-        # Last resort: fetch everything and filter manually
         try:
-            print("🔄 Falling back to unfiltered query...")
             results = collection.query(
                 query_embeddings=[query_embedding],
                 n_results=fetch_count,
                 include=["metadatas", "distances"]
             )
         except Exception as e2:
-            print(f"❌ Fallback query also failed: {e2}")
             return []
 
     if not results["metadatas"] or not results["metadatas"][0]:
-        print("⚠️  ChromaDB returned no results.")
         return []
 
     memories      = []
     seen_snippets = []
 
     for metadata, distance in zip(results["metadatas"][0], results["distances"][0]):
-        # Manual user filter (handles fallback case where where= wasn't applied)
         if str(metadata.get("user_id")) != str(user_id):
             continue
 
         similarity = round(1 - distance, 3)
-        print(f"   Found memory: similarity={similarity}, topic={metadata.get('topic')}")
-
         if similarity < 0.25:
             continue
 
-        # Optional Python-side topic filter
-        if topic and topic != "general":
-            if metadata.get("topic") != topic:
-                continue
+        if topic and topic != "general" and metadata.get("topic") != topic:
+            continue
 
-        # Deduplicate
         snippet = metadata.get("ai_response", "")[:100]
         if any(_text_overlap(snippet, seen) > 0.7 for seen in seen_snippets):
             continue
@@ -149,7 +130,6 @@ def retrieve_memories(
         if len(memories) >= n_results:
             break
 
-    print(f"✅ Retrieved {len(memories)} memories for injection.")
     return memories
 
 
@@ -163,7 +143,8 @@ def _text_overlap(a: str, b: str) -> float:
 
 def get_memory_count(user_id: int) -> int:
     try:
-        results = collection.get(where={"user_id": str(user_id)})
+        # Optimized to only pull IDs and not heavy text data
+        results = collection.get(where={"user_id": str(user_id)}, include=[])
         return len(results["ids"])
     except Exception:
         return 0
