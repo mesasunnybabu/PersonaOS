@@ -9,14 +9,21 @@ import uuid
 HF_TOKEN = os.getenv("HF_TOKEN")
 API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
 
+# 🧠 FIX: Dummy class to prevent ChromaDB from loading heavy default ONNX/onnxruntime utilities
+class DisableClientEmbedding:
+    def __call__(self, input: list) -> list:
+        return []
+
 chroma_client = chromadb.PersistentClient(
     path="./chroma_db",
     settings=Settings(anonymized_telemetry=False)
 )
 
+# Pass the dummy class here to override default model instantiation
 collection = chroma_client.get_or_create_collection(
     name="personaos_memories",
-    metadata={"hnsw:space": "cosine"}
+    metadata={"hnsw:space": "cosine"},
+    embedding_function=DisableClientEmbedding() # ✅ ONNX runtime disabled
 )
 
 
