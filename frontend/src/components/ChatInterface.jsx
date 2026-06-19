@@ -124,11 +124,14 @@ function ChatInterface({ profile, onMessageSent, onSendRef }) {
 
   const bottomRef = useRef(null);
 
-useEffect(() => {
-    loadHistory();
-    loadMemoryStats();
+  // ✅ FIXED: Safely initializes and calls endpoints as soon as the profile ID balances
+  useEffect(() => {
+    if (profile?.id) {
+      loadHistory();
+      loadMemoryStats();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [profile?.id]);
 
   useEffect(() => {
     if (onSendRef) onSendRef((msg) => sendMessage(msg));
@@ -233,7 +236,10 @@ useEffect(() => {
         id:           `ai-${Date.now()}`
       };
       setMessages(prev => [...prev, aiMsg]);
-      setMemoryCount(prev => prev + 1);
+      
+      // ✅ FIXED: Instead of manual blind local addition, pulls real ground-truth tallies directly from database
+      loadMemoryStats();
+      
       if (onMessageSent) onMessageSent();
 
     } catch (err) {
