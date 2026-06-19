@@ -62,7 +62,7 @@ function CustomTooltip({ active, payload, label }) {
 
 function ConfidenceRing({ score, topic }) {
   const pct  = Math.round(score * 100);
-  const data = [{ value: pct }, { value: 100 - pct }];
+  //const data = [{ value: pct }, { value: 100 - pct }];
 
   const color =
     pct >= 80 ? '#22c55e' :
